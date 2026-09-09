@@ -28,7 +28,10 @@ button{font:inherit;border:0;border-radius:11px;padding:11px 14px;background:var
 button.secondary{background:#e5e7eb;color:#111827}
 button.danger{background:#fee2e2;color:var(--danger)}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
-.item{display:grid;grid-template-columns:1.8fr .7fr .8fr auto;gap:7px;align-items:end;margin-bottom:8px}
+.toggle-row{display:flex;gap:16px;flex-wrap:wrap;margin:0 0 12px}
+.toggle-row label{display:flex;align-items:center;gap:7px;margin:0;color:var(--text);font-size:14px}
+.toggle-row input{width:auto}
+.item{display:grid;grid-template-columns:1.8fr .7fr .8fr .9fr auto;gap:7px;align-items:end;margin-bottom:8px}
 .item button{padding:11px 12px}
 .totalrow{display:flex;justify-content:space-between;padding:5px 0}
 .totalrow.grand{font-size:19px;font-weight:700;border-top:1px solid var(--line);margin-top:6px;padding-top:10px}
@@ -39,7 +42,7 @@ button.danger{background:#fee2e2;color:var(--danger)}
 .saved .meta{font-size:12px;color:var(--muted)}
 @media(max-width:650px){
   .grid{grid-template-columns:1fr}
-  .item{grid-template-columns:1fr 70px 90px auto}
+  .item{grid-template-columns:1fr 60px 78px 88px auto}
 }
 @media print{
   body{background:white}
@@ -119,6 +122,10 @@ button.danger{background:#fee2e2;color:var(--danger)}
 
   <div class="card no-print">
     <h2>Line items</h2>
+    <div class="toggle-row">
+      <label><input id="showQty" type="checkbox" checked onchange="updateItemLayout()"> Show Qty</label>
+      <label><input id="showRate" type="checkbox" checked onchange="updateItemLayout()"> Show Rate</label>
+    </div>
     <div id="items"></div>
     <button type="button" class="secondary" onclick="addItem()">+ Add item</button>
   </div>
@@ -186,19 +193,48 @@ function nextNo(){
   const n=parseInt(localStorage.getItem("invoiceCounter")||"1");
   return String(n).padStart(4,"0");
 }
-function addItem(data={desc:"",qty:1,rate:0}){
+function addItem(data={desc:"",qty:1,rate:0,amount:null}){
   const row=document.createElement("div"); row.className="item";
+  const derived=(Number(data.qty)||0)*(Number(data.rate)||0);
+  const amount=data.amount===null||data.amount===undefined?derived:Number(data.amount)||0;
   row.innerHTML=`<div><label>Description</label><input class="desc" value="${esc(data.desc)}"></div>
-  <div><label>Qty</label><input class="qty" type="number" step="0.01" inputmode="decimal" value="${data.qty}"></div>
-  <div><label>Rate</label><input class="rate" type="number" step="0.01" inputmode="decimal" value="${data.rate}"></div>
+  <div class="qty-wrap"><label>Qty</label><input class="qty" type="number" step="0.01" inputmode="decimal" value="${data.qty ?? 1}"></div>
+  <div class="rate-wrap"><label>Rate</label><input class="rate" type="number" step="0.01" inputmode="decimal" value="${data.rate ?? 0}"></div>
+  <div class="amount-wrap"><label>Amount</label><input class="amount" type="number" step="0.01" inputmode="decimal" value="${amount}"></div>
   <button class="danger" aria-label="Remove item">×</button>`;
   row.querySelector("button").onclick=()=>{row.remove();calc()};
-  row.querySelectorAll("input").forEach(i=>i.addEventListener("input",calc));
-  $("items").appendChild(row); calc();
+  row.querySelectorAll("input").forEach(i=>i.addEventListener("input",e=>{
+    if(e.target.classList.contains("qty")||e.target.classList.contains("rate")){
+      if($("showQty").checked && $("showRate").checked){
+        row.querySelector(".amount").value=(+row.querySelector(".qty").value||0)*(+row.querySelector(".rate").value||0);
+      }
+    }
+    calc();
+  }));
+  $("items").appendChild(row); updateItemLayout(false); calc();
 }
-function getItems(){return [...document.querySelectorAll(".item")].map(r=>({desc:r.querySelector(".desc").value,qty:+r.querySelector(".qty").value||0,rate:+r.querySelector(".rate").value||0}))}
+function updateItemLayout(syncAmount=true){
+  const showQty=$("showQty").checked, showRate=$("showRate").checked;
+  document.querySelectorAll(".item").forEach(row=>{
+    if(syncAmount && !(showQty&&showRate)) row.querySelector(".amount").value=(+row.querySelector(".qty").value||0)*(+row.querySelector(".rate").value||0) || (+row.querySelector(".amount").value||0);
+    row.querySelector(".qty-wrap").style.display=showQty?"block":"none";
+    row.querySelector(".rate-wrap").style.display=showRate?"block":"none";
+    row.querySelector(".amount-wrap").style.display=(showQty&&showRate)?"none":"block";
+    if(showQty&&showRate) row.style.gridTemplateColumns="1.8fr .7fr .8fr auto";
+    else if(showQty||showRate) row.style.gridTemplateColumns="1.8fr .8fr .9fr auto";
+    else row.style.gridTemplateColumns="1.8fr .9fr auto";
+  });
+  calc();
+}
+function getItems(){
+  const manual=!($("showQty").checked && $("showRate").checked);
+  return [...document.querySelectorAll(".item")].map(r=>{
+    const qty=+r.querySelector(".qty").value||0, rate=+r.querySelector(".rate").value||0;
+    return {desc:r.querySelector(".desc").value,qty,rate,amount:manual?(+r.querySelector(".amount").value||0):qty*rate};
+  })
+}
 function calc(){
-  const sub=getItems().reduce((s,i)=>s+i.qty*i.rate,0);
+  const sub=getItems().reduce((s,i)=>s+(+i.amount||0),0);
   const tax=sub*((+$("taxRate").value||0)/100);
   const d=+$("discount").value||0;
   const total=Math.max(0,sub+tax-d);
@@ -206,11 +242,12 @@ function calc(){
   return {sub,tax,d,total};
 }
 function collect(){
-  const obj={}; fields.forEach(f=>obj[f]=$(f).value); obj.items=getItems(); obj.totals=calc(); obj.updatedAt=new Date().toISOString(); return obj;
+  const obj={}; fields.forEach(f=>obj[f]=$(f).value); obj.showQty=$("showQty").checked; obj.showRate=$("showRate").checked; obj.items=getItems(); obj.totals=calc(); obj.updatedAt=new Date().toISOString(); return obj;
 }
 function apply(o){
   fields.forEach(f=>{if(o[f]!==undefined)$(f).value=o[f]});
-  $("items").innerHTML=""; (o.items?.length?o.items:[{}]).forEach(addItem); calc();
+  $("showQty").checked=o.showQty!==false; $("showRate").checked=o.showRate!==false;
+  $("items").innerHTML=""; (o.items?.length?o.items:[{}]).forEach(addItem); updateItemLayout(false); calc();
 }
 
 function setLogo(dataUrl){
@@ -267,14 +304,16 @@ function saveInvoice(){
 }
 function buildPrint(){
   const o=collect(), t=o.totals;
-  const rows=o.items.map(i=>`<tr><td>${esc(i.desc)}</td><td>${i.qty}</td><td>${money(i.rate)}</td><td>${money(i.qty*i.rate)}</td></tr>`).join("");
+  const showQty=o.showQty!==false, showRate=o.showRate!==false;
+  const headers=["<th>Description</th>",showQty?"<th>Qty</th>":"",showRate?"<th>Rate</th>":"","<th>Amount</th>"].join("");
+  const rows=o.items.map(i=>`<tr><td>${esc(i.desc)}</td>${showQty?`<td>${i.qty}</td>`:""}${showRate?`<td>${money(i.rate)}</td>`:""}<td>${money(i.amount)}</td></tr>`).join("");
   const logo=localStorage.getItem("businessLogo")||"";
   $("printCard").innerHTML=`
   <div class="inv-head"><div><h1>INVOICE</h1><div class="inv-muted">#${esc(o.invNo)}</div></div>
   <div style="text-align:right">${logo?`<img class="invoice-logo" src="${logo}" alt="Company logo">`:""}<br><strong>${esc(o.bizName)}</strong><br>${esc(o.bizAddress)}<br>${esc(o.bizPhone)}<br>${esc(o.bizEmail)}${o.bizTaxId?`<br>Tax ID: ${esc(o.bizTaxId)}`:""}</div></div>
   <div><strong>Bill to</strong><br>${esc(o.custName)}<br>${esc(o.custAddress)}<br>${esc(o.custPhone)}<br>${esc(o.custEmail)}</div>
   <div style="margin-top:18px"><strong>Date:</strong> ${esc(o.invDate)} &nbsp;&nbsp; <strong>Due:</strong> ${esc(o.dueDate)} &nbsp;&nbsp; <strong>Status:</strong> ${esc(o.invStatus)}</div>
-  <table class="inv-table"><thead><tr><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table>
+  <table class="inv-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>
   <div class="inv-totals">
    <div class="totalrow"><span>Subtotal</span><strong>${money(t.sub)}</strong></div>
    <div class="totalrow"><span>Tax</span><strong>${money(t.tax)}</strong></div>
@@ -282,12 +321,12 @@ function buildPrint(){
    <div class="totalrow grand"><span>Total</span><span>${money(t.total)}</span></div>
   </div>
   ${o.payment?`<div class="inv-notes"><strong>Payment</strong><br>${esc(o.payment).replace(/\n/g,"<br>")}</div>`:""}
-  ${o.notes?`<div class="inv-notes"><strong>Notes</strong><br>${esc(o.notes).replace(/\n/g,"<br>")}</div>`:""}`;
+  ${o.notes?`<div class="inv-notes">${esc(o.notes).replace(/\n/g,"<br>")}</div>`:""}`;
 }
 function printInvoice(){buildPrint(); window.print()}
 function newInvoice(){
   const biz=JSON.parse(localStorage.getItem("businessInfo")||"{}");
-  apply({...biz,invNo:nextNo(),invDate:today(),dueDate:today(),invStatus:"Unpaid",taxRate:"0",discount:"0",notes:"Thank you for your business.",items:[{desc:"",qty:1,rate:0}],custName:"",custPhone:"",custEmail:"",custAddress:""});
+  apply({...biz,invNo:nextNo(),invDate:today(),dueDate:today(),invStatus:"Unpaid",taxRate:"0",discount:"0",notes:"Thank you for your business.",showQty:true,showRate:true,items:[{desc:"",qty:1,rate:0,amount:0}],custName:"",custPhone:"",custEmail:"",custAddress:""});
   $("status").textContent="";
   window.scrollTo({top:0,behavior:"smooth"});
 }
