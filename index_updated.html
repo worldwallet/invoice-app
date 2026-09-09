@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#111827">
+<title>Local Invoice</title>
+<style>
+:root{
+  --bg:#f3f4f6;--card:#fff;--text:#111827;--muted:#6b7280;--line:#d1d5db;
+  --accent:#111827;--danger:#b91c1c;--ok:#166534;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+header{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 16px}
+header h1{font-size:20px;margin:0}
+main{max-width:880px;margin:0 auto;padding:16px 12px 90px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+h2{font-size:17px;margin:0 0 12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.full{grid-column:1/-1}
+label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
+input,textarea,select{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--text)}
+textarea{min-height:80px;resize:vertical}
+button{font:inherit;border:0;border-radius:11px;padding:11px 14px;background:var(--accent);color:white;font-weight:600}
+button.secondary{background:#e5e7eb;color:#111827}
+button.danger{background:#fee2e2;color:var(--danger)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.toggle-row{display:flex;gap:16px;flex-wrap:wrap;margin:0 0 12px}
+.toggle-row label{display:flex;align-items:center;gap:7px;margin:0;color:var(--text);font-size:14px}
+.toggle-row input{width:auto}
+.item{display:grid;grid-template-columns:1.8fr .7fr .8fr .9fr auto;gap:7px;align-items:end;margin-bottom:8px}
+.item button{padding:11px 12px}
+.totalrow{display:flex;justify-content:space-between;padding:5px 0}
+.totalrow.grand{font-size:19px;font-weight:700;border-top:1px solid var(--line);margin-top:6px;padding-top:10px}
+.small{font-size:12px;color:var(--muted)}
+.status{font-size:12px;color:var(--ok);min-height:18px;margin-top:8px}
+.invoice-list{display:grid;gap:8px}
+.saved{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.saved .meta{font-size:12px;color:var(--muted)}
+@media(max-width:650px){
+  .grid{grid-template-columns:1fr}
+  .item{grid-template-columns:1fr 60px 78px 88px auto}
+}
+@media print{
+  body{background:white}
+  header,.no-print,#savedCard{display:none!important}
+  main{padding:0;max-width:none}
+  .card{box-shadow:none;border:0;border-radius:0;margin:0;padding:0}
+  #editor > .card:not(#printCard){display:none}
+  #printCard{display:block!important}
+}
+#printCard{display:none}
+.inv-head{display:flex;justify-content:space-between;gap:20px;margin-bottom:26px}
+.logo-preview{max-width:180px;max-height:90px;object-fit:contain;display:block;margin:8px 0}
+.invoice-logo{max-width:180px;max-height:95px;object-fit:contain;margin-bottom:10px}
+.inv-head h1{font-size:30px;margin:0}
+.inv-muted{color:#6b7280}
+.inv-table{width:100%;border-collapse:collapse;margin-top:22px}
+.inv-table th,.inv-table td{padding:9px 6px;border-bottom:1px solid #e5e7eb;text-align:left}
+.inv-table th:nth-child(2),.inv-table th:nth-child(3),.inv-table th:nth-child(4),
+.inv-table td:nth-child(2),.inv-table td:nth-child(3),.inv-table td:nth-child(4){text-align:right}
+.inv-totals{max-width:330px;margin-left:auto;margin-top:18px}
+.inv-notes{margin-top:28px}
+</style>
+</head>
+<body>
+<header><h1>Local Invoice</h1></header>
+<main>
+<section id="editor">
+
+<div id="compatNotice" class="card no-print" style="border-left:4px solid #92400e;display:none">
+  <strong>iPhone file preview detected.</strong>
+  <div class="small" style="margin-top:6px">
+    If buttons do not work, this file is being opened in Files/Quick Look instead of a normal webpage.
+    Host it as a webpage (for example with GitHub Pages) and open it in Safari.
+  </div>
+</div>
+
+  <div class="card no-print">
+    <h2>Your business</h2>
+    <div style="margin-bottom:12px">
+      <label>Company logo</label>
+      <input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+      <img id="logoPreview" class="logo-preview" alt="Company logo preview" style="display:none">
+      <div class="actions" style="margin-top:8px">
+        <button type="button" class="secondary" id="removeLogo" onclick="clearLogo()" style="display:none">Remove logo</button>
+      </div>
+      <div class="small">PNG, JPG, WebP, or GIF. The logo is stored on this device with your business information.</div>
+    </div>
+    <div class="grid">
+      <div><label>Business name</label><input id="bizName" placeholder="Your Business LLC"></div>
+      <div><label>Phone</label><input id="bizPhone" inputmode="tel"></div>
+      <div><label>Email</label><input id="bizEmail" inputmode="email"></div>
+      <div><label>Tax ID / EIN</label><input id="bizTaxId" autocomplete="off" placeholder="XX-XXXXXXX"></div>
+      <div><label>Address</label><input id="bizAddress"></div>
+      <div class="full"><label>Payment instructions</label><textarea id="payment" placeholder="Cash, check, Zelle, Venmo, etc."></textarea></div>
+    </div>
+  </div>
+
+  <div class="card no-print">
+    <h2>Invoice</h2>
+    <div class="grid">
+      <div><label>Invoice #</label><input id="invNo"></div>
+      <div><label>Date</label><input id="invDate" type="date"></div>
+      <div><label>Due date</label><input id="dueDate" type="date"></div>
+      <div><label>Status</label><select id="invStatus"><option>Unpaid</option><option>Paid</option><option>Partially Paid</option></select></div>
+    </div>
+  </div>
+
+  <div class="card no-print">
+    <h2>Customer</h2>
+    <div class="grid">
+      <div><label>Name</label><input id="custName"></div>
+      <div><label>Phone</label><input id="custPhone" inputmode="tel"></div>
+      <div><label>Email</label><input id="custEmail" inputmode="email"></div>
+      <div><label>Address</label><input id="custAddress"></div>
+    </div>
+  </div>
+
+  <div class="card no-print">
+    <h2>Line items</h2>
+    <div class="toggle-row">
+      <label><input id="showQty" type="checkbox" checked onchange="updateItemLayout()"> Show Qty</label>
+      <label><input id="showRate" type="checkbox" checked onchange="updateItemLayout()"> Show Rate</label>
+    </div>
+    <div id="items"></div>
+    <button type="button" class="secondary" onclick="addItem()">+ Add item</button>
+  </div>
+
+  <div class="card no-print">
+    <h2>Totals</h2>
+    <div class="grid">
+      <div><label>Tax rate (%)</label><input id="taxRate" type="number" step="0.01" inputmode="decimal" value="0"></div>
+      <div><label>Discount ($)</label><input id="discount" type="number" step="0.01" inputmode="decimal" value="0"></div>
+      <div class="full">
+        <div class="totalrow"><span>Subtotal</span><strong id="subtotal">$0.00</strong></div>
+        <div class="totalrow"><span>Tax</span><strong id="tax">$0.00</strong></div>
+        <div class="totalrow"><span>Discount</span><strong id="disc">$0.00</strong></div>
+        <div class="totalrow grand"><span>Total</span><span id="total">$0.00</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card no-print">
+    <h2>Notes</h2>
+    <textarea id="notes" placeholder="Thank you for your business."></textarea>
+  </div>
+
+  <div class="card no-print">
+    <div class="actions">
+      <button type="button" onclick="saveInvoice()">Save invoice</button>
+      <button type="button" onclick="printInvoice()">Create PDF / Print</button>
+      <button type="button" class="secondary" onclick="newInvoice()">New invoice</button>
+      <button type="button" class="secondary" onclick="exportData()">Backup data</button>
+      <label style="margin:0"><span class="secondary" style="display:inline-block;padding:11px 14px;border-radius:11px;background:#e5e7eb;color:#111827;font-weight:600;cursor:pointer">Restore backup</span><input type="file" id="importFile" accept="application/json" style="display:none"></label>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="small">Data is stored only in this browser unless you export a backup.</div>
+  </div>
+
+  <div class="card" id="printCard"></div>
+</section>
+
+<div class="card no-print" id="savedCard">
+  <h2>Saved invoices</h2>
+  <div id="savedList" class="invoice-list"></div>
+</div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+
+function showCompatNotice(){
+  const n=$("compatNotice");
+  if(!n)return;
+  // Quick Look/file previews on iOS commonly block or sandbox scripts/storage.
+  const isFile=location.protocol==="file:" || location.protocol==="about:";
+  if(isFile) n.style.display="block";
+}
+window.addEventListener("error",e=>{
+  const s=$("status");
+  if(s) s.textContent="Something blocked the app. Open it as a webpage in Safari rather than Files preview.";
+});
+
+const fields=["bizName","bizPhone","bizEmail","bizTaxId","bizAddress","payment","invNo","invDate","dueDate","invStatus","custName","custPhone","custEmail","custAddress","taxRate","discount","notes"];
+const money=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(n)||0);
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function today(){return new Date().toISOString().slice(0,10)}
+function nextNo(){
+  const n=parseInt(localStorage.getItem("invoiceCounter")||"1");
+  return String(n).padStart(4,"0");
+}
+function addItem(data={desc:"",qty:1,rate:0,amount:null}){
+  const row=document.createElement("div"); row.className="item";
+  const derived=(Number(data.qty)||0)*(Number(data.rate)||0);
+  const amount=data.amount===null||data.amount===undefined?derived:Number(data.amount)||0;
+  row.innerHTML=`<div><label>Description</label><input class="desc" value="${esc(data.desc)}"></div>
+  <div class="qty-wrap"><label>Qty</label><input class="qty" type="number" step="0.01" inputmode="decimal" value="${data.qty ?? 1}"></div>
+  <div class="rate-wrap"><label>Rate</label><input class="rate" type="number" step="0.01" inputmode="decimal" value="${data.rate ?? 0}"></div>
+  <div class="amount-wrap"><label>Amount</label><input class="amount" type="number" step="0.01" inputmode="decimal" value="${amount}"></div>
+  <button class="danger" aria-label="Remove item">×</button>`;
+  row.querySelector("button").onclick=()=>{row.remove();calc()};
+  row.querySelectorAll("input").forEach(i=>i.addEventListener("input",e=>{
+    if(e.target.classList.contains("qty")||e.target.classList.contains("rate")){
+      if($("showQty").checked && $("showRate").checked){
+        row.querySelector(".amount").value=(+row.querySelector(".qty").value||0)*(+row.querySelector(".rate").value||0);
+      }
+    }
+    calc();
+  }));
+  $("items").appendChild(row); updateItemLayout(false); calc();
+}
+function updateItemLayout(syncAmount=true){
+  const showQty=$("showQty").checked, showRate=$("showRate").checked;
+  document.querySelectorAll(".item").forEach(row=>{
+    if(syncAmount && !(showQty&&showRate)) row.querySelector(".amount").value=(+row.querySelector(".qty").value||0)*(+row.querySelector(".rate").value||0) || (+row.querySelector(".amount").value||0);
+    row.querySelector(".qty-wrap").style.display=showQty?"block":"none";
+    row.querySelector(".rate-wrap").style.display=showRate?"block":"none";
+    row.querySelector(".amount-wrap").style.display=(showQty&&showRate)?"none":"block";
+    if(showQty&&showRate) row.style.gridTemplateColumns="1.8fr .7fr .8fr auto";
+    else if(showQty||showRate) row.style.gridTemplateColumns="1.8fr .8fr .9fr auto";
+    else row.style.gridTemplateColumns="1.8fr .9fr auto";
+  });
+  calc();
+}
+function getItems(){
+  const manual=!($("showQty").checked && $("showRate").checked);
+  return [...document.querySelectorAll(".item")].map(r=>{
+    const qty=+r.querySelector(".qty").value||0, rate=+r.querySelector(".rate").value||0;
+    return {desc:r.querySelector(".desc").value,qty,rate,amount:manual?(+r.querySelector(".amount").value||0):qty*rate};
+  })
+}
+function calc(){
+  const sub=getItems().reduce((s,i)=>s+(+i.amount||0),0);
+  const tax=sub*((+$("taxRate").value||0)/100);
+  const d=+$("discount").value||0;
+  const total=Math.max(0,sub+tax-d);
+  $("subtotal").textContent=money(sub); $("tax").textContent=money(tax); $("disc").textContent="-"+money(d); $("total").textContent=money(total);
+  return {sub,tax,d,total};
+}
+function collect(){
+  const obj={}; fields.forEach(f=>obj[f]=$(f).value); obj.showQty=$("showQty").checked; obj.showRate=$("showRate").checked; obj.items=getItems(); obj.totals=calc(); obj.updatedAt=new Date().toISOString(); return obj;
+}
+function apply(o){
+  fields.forEach(f=>{if(o[f]!==undefined)$(f).value=o[f]});
+  $("showQty").checked=o.showQty!==false; $("showRate").checked=o.showRate!==false;
+  $("items").innerHTML=""; (o.items?.length?o.items:[{}]).forEach(addItem); updateItemLayout(false); calc();
+}
+
+function setLogo(dataUrl){
+  if(dataUrl){
+    localStorage.setItem("businessLogo",dataUrl);
+    $("logoPreview").src=dataUrl;
+    $("logoPreview").style.display="block";
+    $("removeLogo").style.display="inline-block";
+  }else{
+    localStorage.removeItem("businessLogo");
+    $("logoPreview").removeAttribute("src");
+    $("logoPreview").style.display="none";
+    $("removeLogo").style.display="none";
+  }
+}
+function clearLogo(){setLogo(""); $("logoFile").value=""; $("status").textContent="Logo removed."}
+$("logoFile").addEventListener("change",e=>{
+  const f=e.target.files && e.target.files[0];
+  if(!f)return;
+  if(!f.type.startsWith("image/")){alert("Please choose an image file."); return}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=1000;
+      let w=img.width,h=img.height;
+      if(w>max||h>max){const s=Math.min(max/w,max/h);w=Math.round(w*s);h=Math.round(h*s)}
+      const c=document.createElement("canvas"); c.width=w;c.height=h;
+      c.getContext("2d").drawImage(img,0,0,w,h);
+      let data;
+      try{data=c.toDataURL("image/png",0.92)}catch{data=ev.target.result}
+      setLogo(data);
+      $("status").textContent="Logo added.";
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(f);
+});
+
+function persistBusiness(){
+  const b={}; ["bizName","bizPhone","bizEmail","bizTaxId","bizAddress","payment"].forEach(f=>b[f]=$(f).value);
+  localStorage.setItem("businessInfo",JSON.stringify(b));
+}
+function saveInvoice(){
+  try{
+  const inv=collect(); if(!inv.invNo) inv.invNo=nextNo();
+  persistBusiness();
+  const all=JSON.parse(localStorage.getItem("invoices")||"{}"); all[inv.invNo]=inv; localStorage.setItem("invoices",JSON.stringify(all));
+  const current=parseInt(inv.invNo,10); if(Number.isFinite(current)) localStorage.setItem("invoiceCounter",String(Math.max(current+1,parseInt(localStorage.getItem("invoiceCounter")||"1"))));
+  $("status").textContent="Saved on this device."; renderSaved();
+  }catch(err){
+    $("status").textContent="Saving is blocked in this file preview. Open the app as a webpage in Safari.";
+  }
+}
+function buildPrint(){
+  const o=collect(), t=o.totals;
+  const showQty=o.showQty!==false, showRate=o.showRate!==false;
+  const headers=["<th>Description</th>",showQty?"<th>Qty</th>":"",showRate?"<th>Rate</th>":"","<th>Amount</th>"].join("");
+  const rows=o.items.map(i=>`<tr><td>${esc(i.desc)}</td>${showQty?`<td>${i.qty}</td>`:""}${showRate?`<td>${money(i.rate)}</td>`:""}<td>${money(i.amount)}</td></tr>`).join("");
+  const logo=localStorage.getItem("businessLogo")||"";
+  $("printCard").innerHTML=`
+  <div class="inv-head"><div><h1>INVOICE</h1><div class="inv-muted">#${esc(o.invNo)}</div></div>
+  <div style="text-align:right">${logo?`<img class="invoice-logo" src="${logo}" alt="Company logo">`:""}<br><strong>${esc(o.bizName)}</strong><br>${esc(o.bizAddress)}<br>${esc(o.bizPhone)}<br>${esc(o.bizEmail)}${o.bizTaxId?`<br>Tax ID: ${esc(o.bizTaxId)}`:""}</div></div>
+  <div><strong>Bill to</strong><br>${esc(o.custName)}<br>${esc(o.custAddress)}<br>${esc(o.custPhone)}<br>${esc(o.custEmail)}</div>
+  <div style="margin-top:18px"><strong>Date:</strong> ${esc(o.invDate)} &nbsp;&nbsp; <strong>Due:</strong> ${esc(o.dueDate)} &nbsp;&nbsp; <strong>Status:</strong> ${esc(o.invStatus)}</div>
+  <table class="inv-table"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table>
+  <div class="inv-totals">
+   <div class="totalrow"><span>Subtotal</span><strong>${money(t.sub)}</strong></div>
+   <div class="totalrow"><span>Tax</span><strong>${money(t.tax)}</strong></div>
+   <div class="totalrow"><span>Discount</span><strong>-${money(t.d)}</strong></div>
+   <div class="totalrow grand"><span>Total</span><span>${money(t.total)}</span></div>
+  </div>
+  ${o.payment?`<div class="inv-notes"><strong>Payment</strong><br>${esc(o.payment).replace(/\n/g,"<br>")}</div>`:""}
+  ${o.notes?`<div class="inv-notes">${esc(o.notes).replace(/\n/g,"<br>")}</div>`:""}`;
+}
+function printInvoice(){buildPrint(); window.print()}
+function newInvoice(){
+  const biz=JSON.parse(localStorage.getItem("businessInfo")||"{}");
+  apply({...biz,invNo:nextNo(),invDate:today(),dueDate:today(),invStatus:"Unpaid",taxRate:"0",discount:"0",notes:"Thank you for your business.",showQty:true,showRate:true,items:[{desc:"",qty:1,rate:0,amount:0}],custName:"",custPhone:"",custEmail:"",custAddress:""});
+  $("status").textContent="";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function renderSaved(){
+  const all=JSON.parse(localStorage.getItem("invoices")||"{}");
+  const arr=Object.values(all).sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
+  $("savedList").innerHTML=arr.length?arr.map(i=>`<div class="saved"><div><strong>#${esc(i.invNo)} — ${esc(i.custName||"No customer")}</strong><div class="meta">${esc(i.invDate)} · ${money(i.totals?.total||0)} · ${esc(i.invStatus||"")}</div></div><div class="actions"><button class="secondary" onclick='loadSaved(${JSON.stringify(i.invNo)})'>Open</button><button class="danger" onclick='deleteSaved(${JSON.stringify(i.invNo)})'>Delete</button></div></div>`).join(""):'<div class="small">No saved invoices yet.</div>';
+}
+function loadSaved(no){const all=JSON.parse(localStorage.getItem("invoices")||"{}"); if(all[no]){apply(all[no]); window.scrollTo({top:0,behavior:"smooth"})}}
+function deleteSaved(no){const all=JSON.parse(localStorage.getItem("invoices")||"{}"); delete all[no]; localStorage.setItem("invoices",JSON.stringify(all)); renderSaved()}
+function exportData(){
+  persistBusiness();
+  const blob=new Blob([JSON.stringify({business:JSON.parse(localStorage.getItem("businessInfo")||"{}"),logo:localStorage.getItem("businessLogo")||"",invoices:JSON.parse(localStorage.getItem("invoices")||"{}"),counter:localStorage.getItem("invoiceCounter")||"1"},null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="invoice-backup-"+today()+".json"; a.click(); URL.revokeObjectURL(a.href)
+}
+$("importFile").addEventListener("change",async e=>{
+  const f=e.target.files[0]; if(!f)return; try{const d=JSON.parse(await f.text()); localStorage.setItem("businessInfo",JSON.stringify(d.business||{})); localStorage.setItem("invoices",JSON.stringify(d.invoices||{})); localStorage.setItem("invoiceCounter",d.counter||"1"); setLogo(d.logo||""); showCompatNotice(); setLogo(localStorage.getItem("businessLogo")||""); newInvoice(); renderSaved(); $("status").textContent="Backup restored."}catch{alert("That backup file could not be read.")}
+});
+["taxRate","discount"].forEach(id=>$(id).addEventListener("input",calc));
+["bizName","bizPhone","bizEmail","bizTaxId","bizAddress","payment"].forEach(id=>$(id).addEventListener("change",persistBusiness));
+showCompatNotice(); setLogo(localStorage.getItem("businessLogo")||""); newInvoice(); renderSaved();
+</script>
+</body>
+</html>
