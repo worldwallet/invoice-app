@@ -1,132 +1,234 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
 <meta charset="utf-8">
-
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-
 <meta name="apple-mobile-web-app-capable" content="yes">
-
 <title>Local Invoice</title>
 
-<style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-:root{--bg:#f3f4f6;--card:#fff;--text:#111827;--muted:#6b7280;--line:#d1d5db;--accent:#111827;--danger:#b91c1c;--ok:#166534}
+<style>
+:root{
+--bg:#f3f4f6;
+--card:#fff;
+--text:#111827;
+--muted:#6b7280;
+--line:#d1d5db;
+--accent:#111827;
+--danger:#b91c1c;
+--ok:#166534
+}
 
 *{box-sizing:border-box}
 
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+body{
+margin:0;
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+background:var(--bg);
+color:var(--text)
+}
 
-header{position:sticky;top:0;z-index:5;background:#fffffff5;border-bottom:1px solid var(--line);padding:14px 16px}
+header{
+position:sticky;
+top:0;
+z-index:5;
+background:#fffffff5;
+border-bottom:1px solid var(--line);
+padding:14px 16px
+}
 
-header h1{font-size:20px;margin:0}
+header h1{
+font-size:20px;
+margin:0
+}
 
-main{max-width:880px;margin:auto;padding:16px 12px 90px}
+main{
+max-width:880px;
+margin:auto;
+padding:16px 12px 90px
+}
 
-.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.card{
+background:#fff;
+border:1px solid var(--line);
+border-radius:16px;
+padding:16px;
+margin-bottom:14px
+}
 
-h2{font-size:17px;margin:0 0 12px}
+h2{
+font-size:17px;
+margin:0 0 12px
+}
 
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px
+}
 
 .full{grid-column:1/-1}
 
-label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
+label{
+font-size:12px;
+color:var(--muted);
+display:block;
+margin-bottom:4px
+}
 
-input,textarea,select{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--text)}
+input,textarea,select{
+width:100%;
+font:inherit;
+padding:11px 12px;
+border:1px solid var(--line);
+border-radius:10px;
+background:#fff;
+color:var(--text)
+}
 
 textarea{min-height:80px}
 
-button{font:inherit;border:0;border-radius:11px;padding:11px 14px;background:var(--accent);color:#fff;font-weight:600}
+button{
+font:inherit;
+border:0;
+border-radius:11px;
+padding:11px 14px;
+background:var(--accent);
+color:#fff;
+font-weight:600
+}
 
-button.secondary{background:#e5e7eb;color:#111827}
+button.secondary{
+background:#e5e7eb;
+color:#111827
+}
 
-button.danger{background:#fee2e2;color:var(--danger)}
+button.danger{
+background:#fee2e2;
+color:var(--danger)
+}
 
-.actions{display:flex;gap:8px;flex-wrap:wrap}
+.actions{
+display:flex;
+gap:8px;
+flex-wrap:wrap
+}
 
-.toggle-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+.toggle-row{
+display:flex;
+gap:16px;
+flex-wrap:wrap;
+margin-bottom:12px
+}
 
-.toggle-row label{display:flex;align-items:center;gap:7px;color:var(--text);font-size:14px}
+.toggle-row label{
+display:flex;
+align-items:center;
+gap:7px;
+color:var(--text);
+font-size:14px
+}
 
 .toggle-row input{width:auto}
 
-.item{display:grid;grid-template-columns:1.8fr .7fr .8fr auto;gap:7px;align-items:end;margin-bottom:8px}
+.item{
+display:grid;
+grid-template-columns:1.8fr .7fr .8fr auto;
+gap:7px;
+align-items:end;
+margin-bottom:8px
+}
 
-.item-controls{display:flex;gap:4px}
+.item-controls{
+display:flex;
+gap:4px
+}
 
-.item-controls button{padding:11px 9px}
+.item-controls button{
+padding:11px 9px
+}
 
-.totalrow{display:flex;justify-content:space-between;padding:5px 0}
+.totalrow{
+display:flex;
+justify-content:space-between;
+padding:5px 0
+}
 
-.totalrow.grand{font-size:19px;font-weight:700;border-top:1px solid var(--line);margin-top:6px;padding-top:10px}
+.totalrow.grand{
+font-size:19px;
+font-weight:700;
+border-top:1px solid var(--line);
+margin-top:6px;
+padding-top:10px
+}
 
-.small{font-size:12px;color:var(--muted)}
+.small{
+font-size:12px;
+color:var(--muted)
+}
 
-.status{font-size:12px;color:var(--ok);min-height:18px;margin-top:8px}
+.status{
+font-size:12px;
+color:var(--ok);
+min-height:18px;
+margin-top:8px
+}
 
-.invoice-list{display:grid;gap:8px}
+.invoice-list{
+display:grid;
+gap:8px
+}
 
-.saved{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.saved{
+border:1px solid var(--line);
+border-radius:10px;
+padding:10px;
+display:flex;
+justify-content:space-between;
+gap:8px;
+align-items:center
+}
 
-.saved .meta{font-size:12px;color:var(--muted)}
+.saved .meta{
+font-size:12px;
+color:var(--muted)
+}
 
-#printCard{display:none}
-
-.inv-head{display:flex;justify-content:space-between;gap:20px;margin-bottom:26px}
-
-.logo-preview,.invoice-logo{max-width:180px;max-height:95px;object-fit:contain}
-
-.inv-table{width:100%;border-collapse:collapse;margin-top:22px}
-
-.inv-table th,.inv-table td{padding:9px 6px;border-bottom:1px solid #e5e7eb;text-align:left}
-
-.inv-totals{max-width:330px;margin-left:auto;margin-top:18px}
-
-.inv-notes{margin-top:28px}
+.logo-preview{
+max-width:180px;
+max-height:95px;
+object-fit:contain
+}
 
 @media(max-width:650px){
 
-.grid{grid-template-columns:1fr}
-
-.item{grid-template-columns:1fr 58px 74px auto}
-
-.item-controls{grid-column:1/-1;justify-content:flex-end}
-
+.grid{
+grid-template-columns:1fr
 }
 
-@media print{
-
-body{background:white}
-
-header,.no-print,#savedCard{display:none!important}
-
-main{padding:0;max-width:none}
-
-.card{border:0;margin:0;padding:0}
-
-#editor>.card:not(#printCard){display:none}
-
-#printCard{display:block!important}
-
+.item{
+grid-template-columns:1fr 58px 74px auto
 }
 
+.item-controls{
+grid-column:1/-1;
+justify-content:flex-end
+}
+
+}
 </style>
-
 </head>
 
 <body>
 
-<header><h1>Local Invoice</h1></header>
+<header>
+<h1>Local Invoice</h1>
+</header>
 
 <main>
 
-<section id="editor">
-
-<div class="card no-print">
+<div class="card">
 
 <h2>Your business</h2>
 
@@ -134,289 +236,249 @@ main{padding:0;max-width:none}
 
 <input id="logoFile" type="file" accept="image/*">
 
-<img id="logoPreview" class="logo-preview" style="display:none">
+<img
+id="logoPreview"
+class="logo-preview"
+style="display:none"
+>
 
-<button type="button" class="secondary" id="removeLogo"
-
-onclick="clearLogo()" style="display:none">Remove logo</button>
+<button
+type="button"
+class="secondary"
+id="removeLogo"
+onclick="clearLogo()"
+style="display:none"
+>
+Remove logo
+</button>
 
 <div class="grid">
 
 <div>
-
 <label>Business name</label>
-
 <input id="bizName">
-
 </div>
 
 <div>
-
 <label>Phone</label>
-
 <input id="bizPhone">
-
 </div>
 
 <div>
-
 <label>Email</label>
-
 <input id="bizEmail">
-
 </div>
 
 <div>
-
 <label>Tax ID / EIN</label>
-
 <input id="bizTaxId">
-
 </div>
 
 <div>
-
 <label>Address</label>
-
 <input id="bizAddress">
-
 </div>
 
 <div class="full">
-
 <label>Payment instructions</label>
-
 <textarea id="payment"></textarea>
-
 </div>
 
 </div>
-
 </div>
 
-<div class="card no-print">
+
+<div class="card">
 
 <h2>Invoice</h2>
 
 <div class="grid">
 
 <div>
-
 <label>Invoice #</label>
-
 <input id="invNo">
-
 </div>
 
 <div>
-
 <label>Date</label>
-
 <input id="invDate" type="date">
-
 </div>
 
 <div>
-
 <label>Due date</label>
-
 <input id="dueDate" type="date">
-
 </div>
 
 <div>
-
 <label>Status</label>
 
 <select id="invStatus">
-
 <option>Unpaid</option>
-
 <option>Paid</option>
-
 <option>Partially Paid</option>
-
 </select>
 
 </div>
 
 </div>
-
 </div>
 
-<div class="card no-print">
+
+<div class="card">
 
 <h2>Customer</h2>
 
 <div class="grid">
 
 <div>
-
 <label>Name</label>
-
 <input id="custName">
-
 </div>
 
 <div>
-
 <label>Phone</label>
-
 <input id="custPhone">
-
 </div>
 
 <div>
-
 <label>Email</label>
-
 <input id="custEmail">
-
 </div>
 
 <div>
-
 <label>Address</label>
-
 <input id="custAddress">
-
 </div>
 
 </div>
-
 </div>
 
-<div class="card no-print">
+
+<div class="card">
 
 <h2>Line items</h2>
 
 <div class="toggle-row">
 
 <label>
-
-<input id="showQty" type="checkbox" checked
-
-onchange="updateItemLayout()"> Show Qty
-
+<input
+id="showQty"
+type="checkbox"
+checked
+onchange="updateItemLayout()"
+>
+Show Qty
 </label>
 
 <label>
-
-<input id="showRate" type="checkbox" checked
-
-onchange="updateItemLayout()"> Show Rate
-
+<input
+id="showRate"
+type="checkbox"
+checked
+onchange="updateItemLayout()"
+>
+Show Rate
 </label>
 
 </div>
 
 <div id="items"></div>
 
-<button type="button" class="secondary" onclick="addItem()">
-
+<button
+type="button"
+class="secondary"
+onclick="addItem()"
+>
 + Add item
-
 </button>
 
 </div>
 
-<div class="card no-print">
+
+<div class="card">
 
 <h2>Totals</h2>
 
 <div class="grid">
 
 <div>
-
 <label>Tax rate (%)</label>
-
-<input id="taxRate" type="number" step=".01" value="0">
-
+<input
+id="taxRate"
+type="number"
+step=".01"
+value="0"
+>
 </div>
 
 <div>
-
 <label>Discount ($)</label>
-
-<input id="discount" type="number" step=".01" value="0">
-
+<input
+id="discount"
+type="number"
+step=".01"
+value="0"
+>
 </div>
 
 <div class="full">
 
 <div class="totalrow">
-
 <span>Subtotal</span>
-
 <strong id="subtotal">$0.00</strong>
-
 </div>
 
 <div class="totalrow">
-
 <span>Tax</span>
-
 <strong id="tax">$0.00</strong>
-
 </div>
 
 <div class="totalrow">
-
 <span>Discount</span>
-
 <strong id="disc">$0.00</strong>
-
 </div>
 
 <div class="totalrow grand">
-
 <span>Total</span>
-
 <span id="total">$0.00</span>
-
 </div>
 
 </div>
-
+</div>
 </div>
 
-</div>
 
-<div class="card no-print">
+<div class="card">
 
 <h2>Payments</h2>
 
 <div id="payments"></div>
 
-<button type="button" class="secondary" onclick="addPayment()">
-
+<button
+type="button"
+class="secondary"
+onclick="addPayment()"
+>
 + Add payment
-
 </button>
 
 <div style="margin-top:12px">
 
 <div class="totalrow">
-
 <span>Payments received</span>
-
 <strong id="paymentsTotal">$0.00</strong>
-
 </div>
 
 <div class="totalrow grand">
-
 <span>Balance due</span>
-
 <span id="balanceDue">$0.00</span>
-
 </div>
 
 </div>
-
 </div>
 
-<div class="card no-print">
+
+<div class="card">
 
 <h2>Notes</h2>
 
@@ -424,267 +486,285 @@ onchange="updateItemLayout()"> Show Rate
 
 </div>
 
-<div class="card no-print">
+
+<div class="card">
 
 <div class="actions">
 
 <button onclick="saveInvoice()">
-
 Save invoice
-
 </button>
 
-<button onclick="printInvoice()">
-
-Create PDF / Print
-
+<button onclick="createPDF()">
+Create PDF
 </button>
 
-<button class="secondary" onclick="newInvoice()">
-
+<button
+class="secondary"
+onclick="newInvoice()"
+>
 New invoice
-
 </button>
 
-<button class="secondary" onclick="exportData()">
-
+<button
+class="secondary"
+onclick="exportData()"
+>
 Backup data
-
 </button>
 
 <label>
 
-<span class="secondary"
-
-style="display:inline-block;padding:11px 14px;border-radius:11px;background:#e5e7eb;font-weight:600">
-
+<span
+class="secondary"
+style="
+display:inline-block;
+padding:11px 14px;
+border-radius:11px;
+background:#e5e7eb;
+font-weight:600
+"
+>
 Restore backup
-
 </span>
 
-<input type="file" id="importFile"
-
-accept="application/json" style="display:none">
+<input
+type="file"
+id="importFile"
+accept="application/json"
+style="display:none"
+>
 
 </label>
 
 </div>
 
-<div class="status" id="status"></div>
+<div
+class="status"
+id="status"
+></div>
 
 <div class="small">
-
 Data is stored only in this browser unless you export a backup.
-
 </div>
 
 </div>
 
-<div class="card" id="printCard"></div>
 
-</section>
-
-<div class="card no-print" id="savedCard">
+<div class="card" id="savedCard">
 
 <h2>Saved invoices</h2>
 
-<div id="savedList" class="invoice-list"></div>
+<div
+id="savedList"
+class="invoice-list"
+></div>
 
 </div>
 
 </main>
 
+
 <script>
 
-const $=id=>document.getElementById(id);
+const $=id=>
+document.getElementById(id);
 
 const money=n=>
-
 new Intl.NumberFormat(
-
 'en-US',
-
-{style:'currency',currency:'USD'}
-
+{
+style:'currency',
+currency:'USD'
+}
 ).format(Number(n)||0);
+
 
 const fields=[
 
 "bizName",
-
 "bizPhone",
-
 "bizEmail",
-
 "bizTaxId",
-
 "bizAddress",
-
 "payment",
 
 "invNo",
-
 "invDate",
-
 "dueDate",
-
 "invStatus",
 
 "custName",
-
 "custPhone",
-
 "custEmail",
-
 "custAddress",
 
 "taxRate",
-
 "discount",
-
 "notes"
 
 ];
 
+
 function esc(s){
 
 return String(s??"").replace(
-
 /[&<>"']/g,
-
 m=>({
-
 "&":"&amp;",
-
 "<":"&lt;",
-
 ">":"&gt;",
-
 '"':"&quot;",
-
 "'":"&#039;"
-
 }[m])
-
 );
 
 }
 
+
 function today(){
 
-return new Date().toISOString().slice(0,10);
+return new Date()
+.toISOString()
+.slice(0,10);
 
 }
+
 
 function nextNo(){
 
 return String(
-
-parseInt(localStorage.getItem("invoiceCounter")||"1")
-
-).padStart(4,"0");
+parseInt(
+localStorage.getItem(
+"invoiceCounter"
+)||"1"
+)
+).padStart(
+4,
+"0"
+);
 
 }
+
 
 function addItem(d={
 
 desc:"",
-
 qty:1,
-
 rate:0,
-
 amount:null
 
 }){
 
-let r=document.createElement("div");
+let r=
+document.createElement(
+"div"
+);
 
 r.className="item";
 
 let a=
-
 d.amount ??
-
-((+d.qty||0)*(+d.rate||0));
+(
+(+d.qty||0) *
+(+d.rate||0)
+);
 
 r.innerHTML=`
 
 <div>
 
-<label>Description</label>
+<label>
+Description
+</label>
 
-<input class="desc" value="${esc(d.desc)}">
+<input
+class="desc"
+value="${esc(d.desc)}"
+>
 
 </div>
+
 
 <div class="qty-wrap">
 
-<label>Qty</label>
+<label>
+Qty
+</label>
 
-<input class="qty"
-
+<input
+class="qty"
 type="number"
-
 step=".01"
-
-value="${d.qty??1}">
+value="${d.qty??1}"
+>
 
 </div>
+
 
 <div class="rate-wrap">
 
-<label>Rate</label>
+<label>
+Rate
+</label>
 
-<input class="rate"
-
+<input
+class="rate"
 type="number"
-
 step=".01"
-
-value="${d.rate??0}">
+value="${d.rate??0}"
+>
 
 </div>
+
 
 <div class="amount-wrap">
 
-<label>Amount</label>
+<label>
+Amount
+</label>
 
-<input class="amount"
-
+<input
+class="amount"
 type="number"
-
 step=".01"
-
-value="${a}">
+value="${a}"
+>
 
 </div>
 
+
 <div class="item-controls">
 
-<button type="button"
-
+<button
+type="button"
 class="secondary up"
+>
+↑
+</button>
 
-aria-label="Move item up">↑</button>
-
-<button type="button"
-
+<button
+type="button"
 class="secondary down"
+>
+↓
+</button>
 
-aria-label="Move item down">↓</button>
-
-<button type="button"
-
+<button
+type="button"
 class="danger remove"
-
-aria-label="Remove item">×</button>
+>
+×
+</button>
 
 </div>
 
 `;
 
-r.querySelector(".remove").onclick=()=>{
+
+r.querySelector(
+".remove"
+).onclick=()=>{
 
 r.remove();
 
@@ -692,163 +772,239 @@ calc();
 
 };
 
-r.querySelector(".up").onclick=()=>{
 
-moveItem(r,-1);
+r.querySelector(
+".up"
+).onclick=()=>{
+
+moveItem(
+r,
+-1
+);
 
 };
 
-r.querySelector(".down").onclick=()=>{
 
-moveItem(r,1);
+r.querySelector(
+".down"
+).onclick=()=>{
+
+moveItem(
+r,
+1
+);
 
 };
 
-r.querySelectorAll("input").forEach(i=>
 
+r.querySelectorAll(
+"input"
+).forEach(
+i=>
 i.oninput=e=>{
 
 if(
 
 (
+e.target.classList.contains(
+"qty"
+)
+||
+e.target.classList.contains(
+"rate"
+)
+)
 
-e.target.classList.contains("qty") ||
+&&
 
-e.target.classList.contains("rate")
+$("showQty").checked
 
-) &&
-
-$("showQty").checked &&
+&&
 
 $("showRate").checked
 
 ){
 
-r.querySelector(".amount").value=
+r.querySelector(
+".amount"
+).value=
 
-(+r.querySelector(".qty").value||0) *
+(
++r.querySelector(
+".qty"
+).value||0
+)
 
-(+r.querySelector(".rate").value||0);
+*
+
+(
++r.querySelector(
+".rate"
+).value||0
+);
 
 }
 
 calc();
 
 }
-
 );
 
-$("items").appendChild(r);
 
-updateItemLayout(false);
+$("items")
+.appendChild(r);
+
+updateItemLayout();
 
 }
 
-function moveItem(r,d){
 
-let p=$("items");
+function moveItem(
+r,
+direction
+){
+
+let parent=
+$("items");
 
 if(
 
-d<0 &&
+direction<0
+
+&&
 
 r.previousElementSibling
 
 ){
 
-p.insertBefore(
-
+parent.insertBefore(
 r,
-
 r.previousElementSibling
-
 );
 
 }
 
+
 if(
 
-d>0 &&
+direction>0
+
+&&
 
 r.nextElementSibling
 
 ){
 
-p.insertBefore(
-
+parent.insertBefore(
 r.nextElementSibling,
-
 r
-
 );
 
 }
 
 }
 
+
 function updateItemLayout(){
 
-let q=$("showQty").checked;
+let showQty=
+$("showQty").checked;
 
-let rt=$("showRate").checked;
+let showRate=
+$("showRate").checked;
+
 
 document
-
-.querySelectorAll(".item")
-
+.querySelectorAll(
+".item"
+)
 .forEach(r=>{
 
-r.querySelector(".qty-wrap").style.display=
+r.querySelector(
+".qty-wrap"
+).style.display=
 
-q ? "block" : "none";
+showQty
+?
+"block"
+:
+"none";
 
-r.querySelector(".rate-wrap").style.display=
 
-rt ? "block" : "none";
+r.querySelector(
+".rate-wrap"
+).style.display=
 
-r.querySelector(".amount-wrap").style.display=
+showRate
+?
+"block"
+:
+"none";
 
-q && rt ? "none" : "block";
+
+r.querySelector(
+".amount-wrap"
+).style.display=
+
+showQty &&
+showRate
+?
+"none"
+:
+"block";
 
 });
+
 
 calc();
 
 }
+
 
 function getItems(){
 
 let manual=
 
 !(
-
-$("showQty").checked &&
-
+$("showQty").checked
+&&
 $("showRate").checked
-
 );
+
 
 return [
 
-...document.querySelectorAll(".item")
+...document.querySelectorAll(
+".item"
+)
 
 ].map(r=>{
 
-let q=
 
-+r.querySelector(".qty").value||0;
+let qty=
 
-let rt=
++r.querySelector(
+".qty"
+).value||0;
 
-+r.querySelector(".rate").value||0;
+
+let rate=
+
++r.querySelector(
+".rate"
+).value||0;
+
 
 return{
 
-desc:r.querySelector(".desc").value,
+desc:
+r.querySelector(
+".desc"
+).value,
 
-qty:q,
+qty,
 
-rate:rt,
+rate,
 
 amount:
 
@@ -856,11 +1012,15 @@ manual
 
 ?
 
-(+r.querySelector(".amount").value||0)
+(
++r.querySelector(
+".amount"
+).value||0
+)
 
 :
 
-q*rt
+qty*rate
 
 };
 
@@ -868,60 +1028,70 @@ q*rt
 
 }
 
+
 function addPayment(d={
 
 date:today(),
-
 amount:0
 
 }){
 
-let r=document.createElement("div");
+let r=
+document.createElement(
+"div"
+);
 
-r.className="grid payment-row";
+r.className=
+"grid payment-row";
 
-r.style.marginBottom="8px";
+r.style.marginBottom=
+"8px";
+
 
 r.innerHTML=`
 
 <div>
 
-<label>Payment date</label>
+<label>
+Payment date
+</label>
 
 <input
-
 class="payment-date"
-
 type="date"
-
-value="${esc(d.date||today())}">
+value="${esc(
+d.date||today()
+)}"
+>
 
 </div>
 
+
 <div>
 
-<label>Amount paid</label>
+<label>
+Amount paid
+</label>
 
-<div style="display:flex;gap:7px">
+<div
+style="
+display:flex;
+gap:7px
+"
+>
 
 <input
-
 class="payment-amount"
-
 type="number"
-
 step=".01"
-
-value="${+d.amount||0}">
+value="${+d.amount||0}"
+>
 
 <button
-
 type="button"
-
-class="danger remove-payment">
-
+class="danger remove-payment"
+>
 ×
-
 </button>
 
 </div>
@@ -930,7 +1100,10 @@ class="danger remove-payment">
 
 `;
 
-r.querySelector(".remove-payment").onclick=()=>{
+
+r.querySelector(
+".remove-payment"
+).onclick=()=>{
 
 r.remove();
 
@@ -938,251 +1111,264 @@ calc();
 
 };
 
-r.querySelectorAll("input").forEach(
 
-i=>i.oninput=calc
-
+r.querySelectorAll(
+"input"
+).forEach(
+i=>
+i.oninput=calc
 );
 
-$("payments").appendChild(r);
+
+$("payments")
+.appendChild(r);
+
 
 calc();
 
 }
 
+
 function getPayments(){
 
 return [
 
-...document.querySelectorAll(".payment-row")
+...document.querySelectorAll(
+".payment-row"
+)
 
 ].map(r=>({
 
 date:
 
-r.querySelector(".payment-date").value,
+r.querySelector(
+".payment-date"
+).value,
 
 amount:
 
-+r.querySelector(".payment-amount").value||0
++r.querySelector(
+".payment-amount"
+).value||0
 
 }));
 
 }
+
 
 function calc(){
 
 let sub=
 
 getItems()
-
 .reduce(
-
-(s,i)=>s+i.amount,
-
+(s,i)=>
+s+i.amount,
 0
-
 );
+
 
 let tax=
 
 sub *
+(
+(+$("taxRate").value||0)
+/
+100
+);
 
-((+$("taxRate").value||0)/100);
 
-let d=
+let discount=
 
 +$("discount").value||0;
+
 
 let total=
 
 Math.max(
-
 0,
-
-sub+tax-d
-
+sub+tax-discount
 );
+
 
 let paid=
 
 getPayments()
-
 .reduce(
-
-(s,p)=>s+p.amount,
-
+(s,p)=>
+s+p.amount,
 0
-
 );
+
 
 let balance=
 
 Math.max(
-
 0,
-
 total-paid
-
 );
 
-$("subtotal").textContent=
 
+$("subtotal").textContent=
 money(sub);
 
 $("tax").textContent=
-
 money(tax);
 
 $("disc").textContent=
-
-"-"+money(d);
+"-"+money(discount);
 
 $("total").textContent=
-
 money(total);
 
 $("paymentsTotal").textContent=
-
 money(paid);
 
 $("balanceDue").textContent=
-
 money(balance);
+
 
 return{
 
 sub,
-
 tax,
-
-d,
-
+d:discount,
 total,
-
 paid,
-
 balance
 
 };
 
 }
 
+
 function collect(){
 
 let o={};
 
+
 fields.forEach(
-
-f=>o[f]=$(f).value
-
+f=>
+o[f]=$(f).value
 );
 
-o.showQty=
 
+o.showQty=
 $("showQty").checked;
 
 o.showRate=
-
 $("showRate").checked;
 
 o.items=
-
 getItems();
 
 o.payments=
-
 getPayments();
 
 o.totals=
-
 calc();
 
 o.updatedAt=
+new Date()
+.toISOString();
 
-new Date().toISOString();
 
 return o;
 
 }
 
+
 function apply(o){
 
 fields.forEach(f=>{
 
-if(o[f]!==undefined){
+if(
+o[f]!==undefined
+){
 
-$(f).value=o[f];
+$(f).value=
+o[f];
 
 }
 
 });
 
-$("showQty").checked=
 
+$("showQty").checked=
 o.showQty!==false;
 
 $("showRate").checked=
-
 o.showRate!==false;
+
 
 $("items").innerHTML="";
 
-(o.items?.length ? o.items : [{}])
 
-.forEach(addItem);
+(
+o.items?.length
+?
+o.items
+:
+[{}]
+).forEach(
+addItem
+);
+
 
 $("payments").innerHTML="";
 
-(o.payments||[])
 
-.forEach(addPayment);
+(
+o.payments||[]
+).forEach(
+addPayment
+);
 
-updateItemLayout(false);
+
+updateItemLayout();
 
 }
+
 
 function setLogo(x){
 
 if(x){
 
 localStorage.setItem(
-
 "businessLogo",
-
 x
-
 );
 
 $("logoPreview").src=x;
 
-$("logoPreview").style.display=
-
+$("logoPreview")
+.style.display=
 "block";
 
-$("removeLogo").style.display=
-
+$("removeLogo")
+.style.display=
 "inline-block";
 
-}else{
+}
+
+else{
 
 localStorage.removeItem(
-
 "businessLogo"
-
 );
 
-$("logoPreview").style.display=
-
+$("logoPreview")
+.style.display=
 "none";
 
-$("removeLogo").style.display=
-
+$("removeLogo")
+.style.display=
 "none";
 
 }
 
 }
+
 
 function clearLogo(){
 
@@ -1190,99 +1376,113 @@ setLogo("");
 
 }
 
+
 $("logoFile").onchange=e=>{
 
-let f=e.target.files[0];
+let f=
+e.target.files[0];
 
 if(!f)return;
 
-let r=new FileReader();
+
+let r=
+new FileReader();
+
 
 r.onload=x=>
+setLogo(
+x.target.result
+);
 
-setLogo(x.target.result);
 
 r.readAsDataURL(f);
 
 };
 
+
 function persistBusiness(){
 
 let b={};
 
+
 [
-
 "bizName",
-
 "bizPhone",
-
 "bizEmail",
-
 "bizTaxId",
-
 "bizAddress",
-
 "payment"
-
-].forEach(
-
-f=>b[f]=$(f).value
-
+]
+.forEach(
+f=>
+b[f]=$(f).value
 );
 
+
 localStorage.setItem(
-
 "businessInfo",
-
 JSON.stringify(b)
-
 );
 
 }
+
 
 function saveInvoice(){
 
 try{
 
-let inv=collect();
+let inv=
+collect();
+
 
 if(!inv.invNo){
 
-inv.invNo=nextNo();
+inv.invNo=
+nextNo();
 
 $("invNo").value=
-
 inv.invNo;
 
 }
 
+
 persistBusiness();
+
 
 let all=
 
 JSON.parse(
-
-localStorage.getItem("invoices")||
-
+localStorage.getItem(
+"invoices"
+)
+||
 "{}"
-
 );
 
-all[inv.invNo]=inv;
+
+all[
+inv.invNo
+]=inv;
+
 
 localStorage.setItem(
-
 "invoices",
-
 JSON.stringify(all)
-
 );
 
-let c=
 
-parseInt(inv.invNo);
+let current=
 
-if(Number.isFinite(c)){
+parseInt(
+inv.invNo
+);
+
+
+if(
+Number.isFinite(
+current
+)
+){
 
 localStorage.setItem(
 
@@ -1292,14 +1492,14 @@ String(
 
 Math.max(
 
-c+1,
+current+1,
 
 parseInt(
-
-localStorage.getItem("invoiceCounter")||
-
+localStorage.getItem(
+"invoiceCounter"
+)
+||
 "1"
-
 )
 
 )
@@ -1310,401 +1510,1088 @@ localStorage.getItem("invoiceCounter")||
 
 }
 
-$("status").textContent=
 
+$("status").textContent=
 "Saved on this device.";
+
 
 renderSaved();
 
-}catch(e){
+}
+
+catch(e){
 
 $("status").textContent=
-
 "Could not save invoice.";
 
 }
 
 }
 
-function buildPrint(){
 
-let o=collect();
-
-let t=o.totals;
-
-let q=
-
-o.showQty!==false;
-
-let r=
-
-o.showRate!==false;
-
-let h=[
-
-"<th>Description</th>",
-
-q?"<th>Qty</th>":"",
-
-r?"<th>Rate</th>":"",
-
-"<th>Amount</th>"
-
-].join("");
-
-let rows=
-
-o.items.map(i=>`
-
-<tr>
-
-<td>${esc(i.desc)}</td>
-
-${q?`<td>${i.qty}</td>`:""}
-
-${r?`<td>${money(i.rate)}</td>`:""}
-
-<td>${money(i.amount)}</td>
-
-</tr>
-
-`).join("");
-
-let pr=
-
-o.payments.map(p=>`
-
-<div class="totalrow">
-
-<span>Payment ${esc(p.date)}</span>
-
-<strong>-${money(p.amount)}</strong>
-
-</div>
-
-`).join("");
-
-let logo=
-
-localStorage.getItem(
-
-"businessLogo"
-
-)||"";
-
-$("printCard").innerHTML=`
-
-<div class="inv-head">
-
-<div>
-
-<h1>INVOICE</h1>
-
-<div>#${esc(o.invNo)}</div>
-
-</div>
-
-<div style="text-align:right">
-
-${logo
-
-?
-
-`<img class="invoice-logo" src="${logo}">`
-
-:
-
-""
-
-}
-
-<br>
-
-<strong>${esc(o.bizName)}</strong>
-
-<br>
-
-${esc(o.bizAddress)}
-
-<br>
-
-${esc(o.bizPhone)}
-
-<br>
-
-${esc(o.bizEmail)}
-
-${o.bizTaxId
-
-?
-
-`<br>Tax ID: ${esc(o.bizTaxId)}`
-
-:
-
-""
-
-}
-
-</div>
-
-</div>
-
-<div>
-
-<strong>Bill to</strong>
-
-<br>
-
-${esc(o.custName)}
-
-<br>
-
-${esc(o.custAddress)}
-
-<br>
-
-${esc(o.custPhone)}
-
-<br>
-
-${esc(o.custEmail)}
-
-</div>
-
-<div style="margin-top:18px">
-
-<strong>Date:</strong>
-
-${esc(o.invDate)}
-
-&nbsp;
-
-<strong>Due:</strong>
-
-${esc(o.dueDate)}
-
-&nbsp;
-
-<strong>Status:</strong>
-
-${esc(o.invStatus)}
-
-</div>
-
-<table class="inv-table">
-
-<thead>
-
-<tr>${h}</tr>
-
-</thead>
-
-<tbody>
-
-${rows}
-
-</tbody>
-
-</table>
-
-<div class="inv-totals">
-
-<div class="totalrow">
-
-<span>Subtotal</span>
-
-<strong>${money(t.sub)}</strong>
-
-</div>
-
-<div class="totalrow">
-
-<span>Tax</span>
-
-<strong>${money(t.tax)}</strong>
-
-</div>
-
-<div class="totalrow">
-
-<span>Discount</span>
-
-<strong>-${money(t.d)}</strong>
-
-</div>
-
-<div class="totalrow">
-
-<span>Total</span>
-
-<strong>${money(t.total)}</strong>
-
-</div>
-
-${pr}
-
-<div class="totalrow grand">
-
-<span>Balance Due</span>
-
-<span>${money(t.balance)}</span>
-
-</div>
-
-</div>
-
-${o.payment
-
-?
-
-`<div class="inv-notes">
-
-<strong>Payment instructions</strong><br>
-
-${esc(o.payment).replace(/\n/g,"<br>")}
-
-</div>`
-
-:
-
-""
-
-}
-
-${o.notes
-
-?
-
-`<div class="inv-notes">
-
-${esc(o.notes).replace(/\n/g,"<br>")}
-
-</div>`
-
-:
-
-""
-
-}
-
-`;
-
-}
-
-function printInvoice(){
-
-buildPrint();
-
-window.print();
-
-}
-
-function newInvoice(){
-
-let b={};
+async function createPDF(){
 
 try{
 
-b=
+const jspdf=
+window.jspdf;
 
-JSON.parse(
 
+if(
+!jspdf ||
+!jspdf.jsPDF
+){
+
+alert(
+"PDF generator could not load. Check your internet connection and try again."
+);
+
+return;
+
+}
+
+
+const jsPDF=
+jspdf.jsPDF;
+
+
+const o=
+collect();
+
+
+const t=
+o.totals;
+
+
+const doc=
+new jsPDF({
+
+unit:"pt",
+
+format:"letter",
+
+orientation:"portrait"
+
+});
+
+
+const W=612;
+
+const H=792;
+
+const M=42;
+
+const R=W-M;
+
+
+let y=44;
+
+
+function text(
+value,
+x,
+yy,
+options={}
+){
+
+doc.text(
+String(
+value??""
+),
+x,
+yy,
+options
+);
+
+}
+
+
+doc.setTextColor(
+17,
+24,
+39
+);
+
+
+doc.setFont(
+"helvetica",
+"bold"
+);
+
+
+doc.setFontSize(
+24
+);
+
+
+text(
+"INVOICE",
+M,
+y
+);
+
+
+doc.setFontSize(
+11
+);
+
+
+doc.setFont(
+"helvetica",
+"normal"
+);
+
+
+text(
+"#"+o.invNo,
+M,
+y+18
+);
+
+
+let logo=
 localStorage.getItem(
+"businessLogo"
+)
+||
+"";
 
-"businessInfo"
 
-)||"{}"
+if(logo){
+
+try{
+
+let format=
+
+logo.startsWith(
+"data:image/jpeg"
+)
+
+?
+
+"JPEG"
+
+:
+
+"PNG";
+
+
+doc.addImage(
+
+logo,
+
+format,
+
+R-110,
+
+30,
+
+110,
+
+55,
+
+undefined,
+
+"FAST"
 
 );
 
-}catch{}
+}
+
+catch(e){}
+
+}
+
+
+let rightY=
+logo
+?
+100
+:
+48;
+
+
+doc.setFontSize(
+10
+);
+
+
+doc.setFont(
+"helvetica",
+"bold"
+);
+
+
+text(
+o.bizName,
+R,
+rightY,
+{
+align:"right"
+}
+);
+
+
+doc.setFont(
+"helvetica",
+"normal"
+);
+
+
+[
+
+o.bizAddress,
+
+o.bizPhone,
+
+o.bizEmail,
+
+o.bizTaxId
+?
+"Tax ID: "+o.bizTaxId
+:
+""
+
+]
+.filter(Boolean)
+.forEach(v=>{
+
+rightY+=13;
+
+text(
+v,
+R,
+rightY,
+{
+align:"right"
+}
+);
+
+});
+
+
+y=
+Math.max(
+125,
+rightY+20
+);
+
+
+doc.setFont(
+"helvetica",
+"bold"
+);
+
+
+text(
+"Bill to",
+M,
+y
+);
+
+
+doc.setFont(
+"helvetica",
+"normal"
+);
+
+
+[
+
+o.custName,
+
+o.custAddress,
+
+o.custPhone,
+
+o.custEmail
+
+]
+.filter(Boolean)
+.forEach(v=>{
+
+y+=13;
+
+text(
+v,
+M,
+y
+);
+
+});
+
+
+y+=24;
+
+
+doc.setFontSize(
+9
+);
+
+
+text(
+
+"Date: "+
+o.invDate+
+"     Due: "+
+o.dueDate+
+"     Status: "+
+o.invStatus,
+
+M,
+
+y
+
+);
+
+
+y+=18;
+
+
+let showQty=
+o.showQty!==false;
+
+
+let showRate=
+o.showRate!==false;
+
+
+let columns=[
+
+{
+
+name:"Description",
+
+x:M,
+
+width:
+
+showQty &&
+showRate
+
+?
+
+285
+
+:
+
+showQty ||
+showRate
+
+?
+
+345
+
+:
+
+405,
+
+align:"left"
+
+}
+
+];
+
+
+let x=
+M+
+columns[0].width;
+
+
+if(showQty){
+
+columns.push({
+
+name:"Qty",
+
+x,
+
+width:55,
+
+align:"right"
+
+});
+
+x+=55;
+
+}
+
+
+if(showRate){
+
+columns.push({
+
+name:"Rate",
+
+x,
+
+width:80,
+
+align:"right"
+
+});
+
+x+=80;
+
+}
+
+
+columns.push({
+
+name:"Amount",
+
+x,
+
+width:R-x,
+
+align:"right"
+
+});
+
+
+doc.setFillColor(
+243,
+244,
+246
+);
+
+
+doc.rect(
+M,
+y,
+R-M,
+18,
+"F"
+);
+
+
+doc.setFont(
+"helvetica",
+"bold"
+);
+
+
+columns.forEach(c=>{
+
+text(
+
+c.name,
+
+c.align==="right"
+
+?
+
+c.x+c.width-4
+
+:
+
+c.x+4,
+
+y+12,
+
+{
+align:c.align
+}
+
+);
+
+});
+
+
+y+=22;
+
+
+doc.setFont(
+"helvetica",
+"normal"
+);
+
+
+const rows=
+o.items||[];
+
+
+let fontSize=
+
+rows.length>12
+?
+7
+:
+9;
+
+
+let rowHeight=
+
+rows.length>12
+?
+13
+:
+17;
+
+
+doc.setFontSize(
+fontSize
+);
+
+
+rows.forEach(i=>{
+
+
+let desc=
+
+doc.splitTextToSize(
+
+String(
+i.desc||""
+),
+
+columns[0].width-8
+
+)[0]
+||
+"";
+
+
+text(
+desc,
+M+4,
+y+10
+);
+
+
+let columnIndex=1;
+
+
+if(showQty){
+
+let c=
+columns[
+columnIndex++
+];
+
+text(
+
+String(
+i.qty
+),
+
+c.x+c.width-4,
+
+y+10,
+
+{
+align:"right"
+}
+
+);
+
+}
+
+
+if(showRate){
+
+let c=
+columns[
+columnIndex++
+];
+
+text(
+
+money(
+i.rate
+),
+
+c.x+c.width-4,
+
+y+10,
+
+{
+align:"right"
+}
+
+);
+
+}
+
+
+let amountColumn=
+columns[
+columnIndex
+];
+
+
+text(
+
+money(
+i.amount
+),
+
+amountColumn.x+
+amountColumn.width-
+4,
+
+y+10,
+
+{
+align:"right"
+}
+
+);
+
+
+doc.setDrawColor(
+229,
+231,
+235
+);
+
+
+doc.line(
+
+M,
+
+y+rowHeight,
+
+R,
+
+y+rowHeight
+
+);
+
+
+y+=rowHeight;
+
+});
+
+
+y+=12;
+
+
+doc.setFontSize(
+9
+);
+
+
+let labelX=
+R-210;
+
+
+let valueX=
+R;
+
+
+function totalRow(
+label,
+value,
+bold=false
+){
+
+doc.setFont(
+
+"helvetica",
+
+bold
+?
+"bold"
+:
+"normal"
+
+);
+
+
+text(
+label,
+labelX,
+y
+);
+
+
+text(
+value,
+valueX,
+y,
+{
+align:"right"
+}
+);
+
+
+y+=14;
+
+}
+
+
+totalRow(
+"Subtotal",
+money(t.sub)
+);
+
+
+totalRow(
+"Tax",
+money(t.tax)
+);
+
+
+totalRow(
+"Discount",
+"-"+money(t.d)
+);
+
+
+totalRow(
+"Total",
+money(t.total),
+true
+);
+
+
+(o.payments||[])
+.forEach(p=>{
+
+totalRow(
+
+"Payment "+
+p.date,
+
+"-"+
+money(
+p.amount
+)
+
+);
+
+});
+
+
+doc.setDrawColor(
+17,
+24,
+39
+);
+
+
+doc.line(
+labelX,
+y-4,
+R,
+y-4
+);
+
+
+totalRow(
+"Balance Due",
+money(t.balance),
+true
+);
+
+
+let bottom=
+
+Math.min(
+y+18,
+H-95
+);
+
+
+doc.setFontSize(
+8
+);
+
+
+doc.setFont(
+"helvetica",
+"normal"
+);
+
+
+if(o.payment){
+
+doc.setFont(
+"helvetica",
+"bold"
+);
+
+
+text(
+"Payment instructions",
+M,
+bottom
+);
+
+
+doc.setFont(
+"helvetica",
+"normal"
+);
+
+
+bottom+=11;
+
+
+doc.splitTextToSize(
+
+o.payment,
+
+R-M
+
+)
+.slice(
+0,
+3
+)
+.forEach(line=>{
+
+text(
+line,
+M,
+bottom
+);
+
+bottom+=10;
+
+});
+
+}
+
+
+if(
+o.notes &&
+bottom<H-35
+){
+
+bottom+=7;
+
+
+doc.splitTextToSize(
+
+o.notes,
+
+R-M
+
+)
+.slice(
+0,
+3
+)
+.forEach(line=>{
+
+text(
+line,
+M,
+bottom
+);
+
+bottom+=10;
+
+});
+
+}
+
+
+const blob=
+doc.output(
+"blob"
+);
+
+
+const url=
+URL.createObjectURL(
+blob
+);
+
+
+const a=
+document.createElement(
+"a"
+);
+
+
+a.href=
+url;
+
+
+a.download=
+
+"Invoice-"+
+
+(
+o.invNo||
+"invoice"
+)
+
++
+".pdf";
+
+
+document.body.appendChild(
+a
+);
+
+
+a.click();
+
+
+a.remove();
+
+
+setTimeout(
+()=>
+URL.revokeObjectURL(
+url
+),
+5000
+);
+
+
+$("status").textContent=
+"PDF created.";
+
+}
+
+catch(e){
+
+console.error(e);
+
+alert(
+"Could not create the PDF."
+);
+
+}
+
+}
+
+
+function newInvoice(){
+
+let business={};
+
+
+try{
+
+business=
+
+JSON.parse(
+localStorage.getItem(
+"businessInfo"
+)
+||
+"{}"
+);
+
+}
+
+catch(e){}
+
 
 apply({
 
-...b,
+...business,
 
-invNo:nextNo(),
+invNo:
+nextNo(),
 
-invDate:today(),
+invDate:
+today(),
 
-dueDate:today(),
+dueDate:
+today(),
 
-invStatus:"Unpaid",
+invStatus:
+"Unpaid",
 
-taxRate:"0",
+taxRate:
+"0",
 
-discount:"0",
+discount:
+"0",
 
 notes:
-
 "Thank you for your business.",
 
-showQty:true,
+showQty:
+true,
 
-showRate:true,
+showRate:
+true,
 
-items:[{}],
+items:[
+{}
+],
 
-payments:[],
+payments:
+[],
 
-custName:"",
+custName:
+"",
 
-custPhone:"",
+custPhone:
+"",
 
-custEmail:"",
+custEmail:
+"",
 
-custAddress:""
+custAddress:
+""
 
 });
+
 
 $("status").textContent="";
 
 }
 
+
 function renderSaved(){
 
 let all={};
+
 
 try{
 
 all=
 
 JSON.parse(
-
-localStorage.getItem("invoices")||
-
+localStorage.getItem(
+"invoices"
+)
+||
 "{}"
-
 );
 
-}catch{}
+}
 
-let a=
+catch(e){}
 
-Object.values(all)
 
+let invoices=
+
+Object.values(
+all
+)
 .sort(
 
-(x,y)=>
+(a,b)=>
 
-(y.updatedAt||"")
-
+(
+b.updatedAt||
+""
+)
 .localeCompare(
-
-x.updatedAt||""
-
+a.updatedAt||
+""
 )
 
 );
 
+
 $("savedList").innerHTML=
 
-a.length
+invoices.length
 
 ?
 
-a.map(i=>`
+invoices.map(i=>`
 
 <div class="saved">
 
@@ -1712,44 +2599,48 @@ a.map(i=>`
 
 <strong>
 
-#${esc(i.invNo)} —
-
-${esc(i.custName||"No customer")}
+#${esc(i.invNo)}
+—
+${esc(
+i.custName||
+"No customer"
+)}
 
 </strong>
 
 <div class="meta">
 
-${esc(i.invDate)} ·
-
-${money(i.totals?.total||0)} ·
-
-${esc(i.invStatus||"")}
+${esc(i.invDate)}
+·
+${money(
+i.totals?.total||
+0
+)}
+·
+${esc(
+i.invStatus||
+""
+)}
 
 </div>
 
 </div>
+
 
 <div class="actions">
 
 <button
-
 class="secondary"
-
-onclick='loadSaved(${JSON.stringify(i.invNo)})'>
-
+onclick='loadSaved(${JSON.stringify(i.invNo)})'
+>
 Open
-
 </button>
 
 <button
-
 class="danger"
-
-onclick='deleteSaved(${JSON.stringify(i.invNo)})'>
-
+onclick='deleteSaved(${JSON.stringify(i.invNo)})'
+>
 Delete
-
 </button>
 
 </div>
@@ -1764,55 +2655,64 @@ Delete
 
 }
 
-function loadSaved(n){
 
-let a=
+function loadSaved(number){
+
+let all=
 
 JSON.parse(
-
-localStorage.getItem("invoices")||
-
+localStorage.getItem(
+"invoices"
+)
+||
 "{}"
-
 );
 
-if(a[n]){
 
-apply(a[n]);
+if(
+all[number]
+){
+
+apply(
+all[number]
+);
 
 }
 
 }
 
-function deleteSaved(n){
 
-let a=
+function deleteSaved(number){
+
+let all=
 
 JSON.parse(
-
-localStorage.getItem("invoices")||
-
+localStorage.getItem(
+"invoices"
+)
+||
 "{}"
-
 );
 
-delete a[n];
+
+delete all[number];
+
 
 localStorage.setItem(
-
 "invoices",
-
-JSON.stringify(a)
-
+JSON.stringify(all)
 );
+
 
 renderSaved();
 
 }
 
+
 function exportData(){
 
 persistBusiness();
+
 
 let blob=
 
@@ -1827,38 +2727,38 @@ JSON.stringify(
 business:
 
 JSON.parse(
-
-localStorage.getItem("businessInfo")||
-
+localStorage.getItem(
+"businessInfo"
+)
+||
 "{}"
-
 ),
 
 logo:
 
 localStorage.getItem(
-
 "businessLogo"
-
-)||"",
+)
+||
+"",
 
 invoices:
 
 JSON.parse(
-
-localStorage.getItem("invoices")||
-
+localStorage.getItem(
+"invoices"
+)
+||
 "{}"
-
 ),
 
 counter:
 
 localStorage.getItem(
-
 "invoiceCounter"
-
-)||"1"
+)
+||
+"1"
 
 },
 
@@ -1871,35 +2771,40 @@ null,
 ],
 
 {
-
-type:"application/json"
-
+type:
+"application/json"
 }
 
 );
 
+
 let a=
 
-document.createElement("a");
+document.createElement(
+"a"
+);
+
 
 a.href=
 
-URL.createObjectURL(blob);
+URL.createObjectURL(
+blob
+);
+
 
 a.download=
 
 "invoice-backup-"+
-
 today()+
-
 ".json";
+
 
 a.click();
 
 }
 
-$("importFile").onchange=
 
+$("importFile").onchange=
 async e=>{
 
 try{
@@ -1907,105 +2812,104 @@ try{
 let d=
 
 JSON.parse(
-
 await e.target.files[0].text()
-
 );
 
-localStorage.setItem(
 
+localStorage.setItem(
 "businessInfo",
-
-JSON.stringify(d.business||{})
-
+JSON.stringify(
+d.business||
+{}
+)
 );
 
-localStorage.setItem(
 
+localStorage.setItem(
 "invoices",
-
-JSON.stringify(d.invoices||{})
-
+JSON.stringify(
+d.invoices||
+{}
+)
 );
+
 
 localStorage.setItem(
-
 "invoiceCounter",
-
-d.counter||"1"
-
+d.counter||
+"1"
 );
 
-setLogo(d.logo||"");
+
+setLogo(
+d.logo||
+""
+);
+
 
 newInvoice();
 
+
 renderSaved();
 
-$("status").textContent=
 
+$("status").textContent=
 "Backup restored.";
 
-}catch{
+}
+
+catch(e){
 
 alert(
-
 "That backup file could not be read."
-
 );
 
 }
 
 };
 
-[
 
+[
 "taxRate",
-
 "discount"
-
-].forEach(
-
-id=>$(id).oninput=calc
-
+]
+.forEach(
+id=>
+$(id).oninput=
+calc
 );
+
 
 [
-
 "bizName",
-
 "bizPhone",
-
 "bizEmail",
-
 "bizTaxId",
-
 "bizAddress",
-
 "payment"
-
-].forEach(
-
-id=>$(id).onchange=persistBusiness
-
+]
+.forEach(
+id=>
+$(id).onchange=
+persistBusiness
 );
+
 
 setLogo(
-
 localStorage.getItem(
-
 "businessLogo"
-
-)||""
-
+)
+||
+""
 );
 
+
 newInvoice();
+
 
 renderSaved();
 
 </script>
 
 </body>
-
 </html>
