@@ -51,7 +51,10 @@ button.secondary{background:#e5e7eb;color:#111827}button.danger{background:#fee2
 const $=id=>document.getElementById(id);
 const money=n=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(Number(n)||0);
 const fields=["bizName","bizPhone","bizEmail","bizTaxId","bizAddress","payment","invNo","invDate","dueDate","invStatus","custName","custPhone","custEmail","custAddress","taxRate","discount","notes"];
-function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
+function esc(s){
+  const entityMap={"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"};
+  return String(s ?? "").replace(/[&<>"']/g, m => entityMap[m]);
+}
 function today(){return new Date().toISOString().slice(0,10);}
 function nextNo(){return String(parseInt(localStorage.getItem("invoiceCounter")||"1",10)).padStart(4,"0");}
 function normalizeInvoices(v){if(Array.isArray(v)){let o={};v.forEach((i,n)=>{if(i&&typeof i==="object"){let k=String(i.invNo??i.invoiceNumber??i.number??n+1);i.invNo=k;o[k]=i;}});return o;}return v&&typeof v==="object"?v:{};}
